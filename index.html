@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中二歷史挑戰：法國大革命百萬富翁</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background: radial-gradient(circle at center, #0a0a2a 0%, #000000 100%);
+            color: #ffffff;
+            font-family: 'Noto Sans TC', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        #game-container {
+            width: 90%;
+            max-width: 800px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        h1, h2 {
+            color: #ffd700;
+            text-shadow: 0 0 10px #ff8c00;
+        }
+
+        /* 登入介面 */
+        #login-screen, #result-screen {
+            background: rgba(0, 0, 50, 0.8);
+            border: 2px solid #ffd700;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 50px;
+            box-shadow: 0 0 20px #ffd700;
+        }
+
+        input {
+            padding: 10px;
+            margin: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #aaa;
+            text-align: center;
+            width: 80%;
+            max-width: 300px;
+        }
+
+        button {
+            background: linear-gradient(180deg, #0033cc 0%, #000066 100%);
+            color: white;
+            border: 2px solid #ffd700;
+            padding: 12px 30px;
+            font-size: 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background: linear-gradient(180deg, #ff8c00 0%, #cc5500 100%);
+            box-shadow: 0 0 15px #ffd700;
+        }
+
+        /* 遊戲介面 */
+        #quiz-screen {
+            display: none;
+            width: 100%;
+        }
+
+        #stats-bar {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(255, 215, 0, 0.2);
+            border: 1px solid #ffd700;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 18px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        #question-box {
+            background: #000066;
+            border: 3px solid #ffd700;
+            border-radius: 50px;
+            padding: 30px;
+            font-size: 22px;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+            box-shadow: inset 0 0 20px #00px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .option-btn {
+            background: #000033;
+            border: 2px solid #ffd700;
+            border-radius: 40px;
+            padding: 15px 20px;
+            font-size: 18px;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+            text-align: left;
+            position: relative;
+        }
+
+        .option-btn::before, .option-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 20px;
+            height: 2px;
+            background: #ffd700;
+        }
+        .option-btn::before { left: -10px; }
+        .option-btn::after { right: -10px; }
+
+        .option-btn:hover:not(:disabled) {
+            background: #ff8c00;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .option-btn.correct {
+            background: #00cc00 !important;
+            color: white !important;
+            box-shadow: 0 0 20px #00ff00;
+        }
+
+        .option-btn.wrong {
+            background: #cc0000 !important;
+            color: white !important;
+            box-shadow: 0 0 20px #ff0000;
+        }
+
+        .fill-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #fill-input {
+            font-size: 24px;
+            padding: 15px;
+            width: 80%;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            background: #fff;
+            color: #000;
+        }
+
+        /* 解釋與下一題區塊 */
+        #explanation-box {
+            display: none;
+            background: rgba(255, 255, 255, 0.95);
+            color: #000;
+            border: 3px solid #ff8c00;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 25px;
+            text-align: left;
+            font-size: 18px;
+            line-height: 1.5;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        #explanation-title {
+            font-weight: bold;
+            color: #cc5500;
+            font-size: 20px;
+            margin-top: 0;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+
+        #next-btn-container {
+            display: none;
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+
+        .next-btn {
+            background: linear-gradient(180deg, #ffaa00 0%, #cc6600 100%);
+            color: #000;
+            border: 2px solid #fff;
+            padding: 15px 40px;
+            font-size: 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 0 15px #ffaa00;
+            transition: 0.3s;
+        }
+
+        .next-btn:hover {
+            background: linear-gradient(180deg, #fff000 0%, #ffaa00 100%);
+            box-shadow: 0 0 25px #fff;
+            transform: scale(1.05);
+        }
+
+        /* 成績證書 */
+        #certificate {
+            border: 5px double #ffd700;
+            padding: 40px;
+            background: #fff;
+            color: #000;
+            margin-top: 20px;
+            border-radius: 10px;
+        }
+
+        #cert-title {
+            color: #8b0000;
+            font-size: 32px;
+            border-bottom: 2px solid #8b0000;
+            padding-bottom: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+            #question-box {
+                font-size: 18px;
+                padding: 20px;
+                border-radius: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    
+    <!-- 登入介面 -->
+    <div id="login-screen">
+        <h1>📜 法國大革命 歷史挑戰</h1>
+        <p>請輸入資料以進入挑戰（通關密碼為必填）</p>
+        <input type="text" id="class-num-input" placeholder="班別及班號 (例: 2A15)" required><br>
+        <input type="text" id="name-input" placeholder="姓名 (例: 陳大文)" required><br>
+        <input type="password" id="pw-input" placeholder="通關密碼" required><br>
+        <button onclick="login()">開始遊戲</button>
+        <p id="login-error" style="color: #ff3333; display: none;">資料不齊全或密碼錯誤！</p>
+    </div>
+
+    <!-- 遊戲介面 -->
+    <div id="quiz-screen">
+        <div id="stats-bar">
+            <span>👤 <span id="player-name"></span> (<span id="player-class-num"></span>)</span>
+            <span>⏱️ 剩餘: <span id="timer">30</span>s</span>
+            <span>💰 積分: <span id="score">0</span></span>
+            <span>📝 第 <span id="q-num">1</span>/20 題</span>
+        </div>
+
+        <div id="question-box">載入中...</div>
+
+        <!-- 選擇題區塊 -->
+        <div id="mc-options" class="options-grid">
+            <button class="option-btn" onclick="checkMC(0)" id="opt-0">A</button>
+            <button class="option-btn" onclick="checkMC(1)" id="opt-1">B</button>
+            <button class="option-btn" onclick="checkMC(2)" id="opt-2">C</button>
+            <button class="option-btn" onclick="checkMC(3)" id="opt-3">D</button>
+        </div>
+
+        <!-- 填充題區塊 -->
+        <div id="fill-options" class="fill-container" style="display:none;">
+            <input type="text" id="fill-input" placeholder="請輸入答案...">
+            <button id="fill-submit-btn" onclick="checkFill()">提交答案</button>
+        </div>
+
+        <!-- 解釋與下一題區塊 -->
+        <div id="explanation-box">
+            <p id="explanation-title">💡 答案解析</p>
+            <div id="explanation-text"></div>
+        </div>
+
+        <div id="next-btn-container">
+            <button class="next-btn" onclick="goToNextQuestion()">下一題 ➔</button>
+        </div>
+    </div>
+
+    <!-- 結果介面 -->
+    <div id="result-screen" style="display:none;">
+        <div id="certificate">
+            <h1 id="cert-title">🏆 歷史科優異證書 🏆</h1>
+            <h2>茲證明</h2>
+            <h1 style="color:#000;"><span id="cert-class-num"></span> <span id="cert-name"></span> 同學</h1>
+            <p style="font-size: 20px;">於「法國大革命及其歷史意義」挑戰中表現出色，</p>
+            <p style="font-size: 20px;">答對：<span id="cert-correct"></span> / 20 題</p>
+            <p style="font-size: 24px; font-weight: bold; color: #b8860b;">總積分：<span id="cert-score"></span> 分</p>
+            <p style="margin-top:40px; font-style: italic;">成績已上傳至雲端排行榜，感謝你的參與！</p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxDX229s0afkaFVuBvCUZIg0kUBW12Zl5z7AFUtqjywStKZwWYIxcoDbbaBNxGVM8Yz/exec";
+    const CORRECT_PASSWORD = "school2026";
+
+    // 玩家資料
+    let player = { classNum: '', name: '', score: 0, correct: 0 };
+    
+    // 遊戲狀態
+    let currentQIndex = 0;
+    let timerInterval;
+    let timeLeft = 0;
+    let selectedQuestions = [];
+    let isAnswering = false;
+
+    // 題庫 (MC 45題, 填充 15題)
+    const dbMC = [
+        { q: "政治革命的主要目的是甚麼？", o: ["推動對外戰爭", "宣揚宗教信仰", "推翻現有體制，建立新制度", "改善國家財政"], a: 2, e: "根據歷史筆記導引，政治革命是由人民發起的由下而上行動，主要目的是「推翻現有體制，建立新制度」，其方式往往涉及激進與暴力。" },
+        { q: "1643至1715年間管治法國，並被稱為「太陽王」的君主是誰？", o: ["路易十六", "拿破崙", "路易十五", "路易十四"], a: 3, e: "「太陽王」是波旁王朝國王路易十四的尊稱。他在1643至1715年間實行絕對專制統治，強調君權神授。" },
+        { q: "路易十四為了加強統治，特別修建了哪一座宮殿？", o: ["凡爾賽宮", "白金漢宮", "羅浮宮", "楓丹白露宮"], a: 0, e: "路易十四特別修建了極其奢華的「凡爾賽宮」以彰顯王權，這也為法國積累了嚴重的財政危機，埋下大革命的伏線。" },
+        { q: "大革命爆發前夕，法國國王疏於朝政且王后揮耗無度，這位國王是誰？", o: ["威廉一世", "路易十六", "路易十四", "伊曼紐二世"], a: 1, e: "大革命爆發前夕，法國面臨嚴重的政治腐敗，當時的國王是路易十六（他疏於朝政），王后則是瑪利安東妮特（揮霍無度）。" },
+        { q: "法國封建制度下的「第一等級」主要是指甚麼人？", o: ["貴族", "平民", "教士", "軍人"], a: 2, e: "大革命前法國的社會階級制度（舊制度）中，「第一等級」是指教士，「第二等級」是貴族，這兩者都享有免稅特權。" },
+        { q: "在舊有社會制度下，佔法國人口多數的基層群眾面臨甚麼困境？", o: ["承擔所有賦稅並缺乏政治發言權", "被迫移居海外殖民地", "需無償為貴族提供軍事服務", "被禁止參與任何宗教活動"], a: 0, e: "佔人口98%的第三等級（基層群眾）沒有特權，卻需要承擔國家所有的賦稅，且在政治上完全缺乏發言權，引發極大的社會不滿。" },
+        { q: "法國在1780年代遭遇甚麼事件，進一步加劇了國家的財政困難？", o: ["傳染病爆發", "軍隊叛變", "外敵入侵", "天災"], a: 3, e: "在1780年代，法國連續遭遇多次「天災」，導致農作物失收，令原本已經因戰爭與王室揮霍而捉襟見肘的國家財政進一步惡化。" },
+        { q: "哪一場運動的思想主張促使法國民眾決心反抗不公義的政府？", o: ["啟盟運動", "文藝復興", "宗教改革", "工業革命"], a: 0, e: "十八世紀的「啟盟運動」提倡理性、自由、平等與民權，深深啟發了法國民眾，促使他們決心推翻不公義的專制政府。" },
+        { q: "法國曾派兵參與哪一場戰爭，令平等及自由的思想傳返國內並鼓舞了民眾？", o: ["普丹戰爭", "美國獨立戰爭", "普法戰爭", "普奧戰爭"], a: 1, e: "法國派兵參與「美國獨立戰爭」。這場戰爭的勝利不僅帶回了平等及自由的思想，更加強了民眾反抗暴政的決心。" },
+        { q: "1789年5月，為了解決財政危機而召開的會議名稱為？", o: ["督政府會議", "國民議會", "三級議會", "維也納會議"], a: 2, e: "1789年5月，國王路易十六為了徵收新稅以解決面臨崩潰的財政危機，被迫重新召開了「三級議會」。" },
+        { q: "因稅制改革建議被否決，基層代表退出原有會議並另組了甚麼機構？", o: ["督政府", "神盛同盟", "第一共和", "國民議會"], a: 3, e: "第三等級（基層群眾）代表因為稅制改革建議被否決，憤而退出三級議會，並另組「國民議會」。" },
+        { q: "1791年10月，國王出走失敗並承認憲法後，法國的政體轉變為？", o: ["君主立憲", "絕對君主制", "民主共和", "聯邦制"], a: 0, e: "1791年10月，路易十六出走失敗並承認憲法。此時，君主權力受到憲法約束，政體轉變為「君主立憲」。" },
+        { q: "1792年4月，哪兩個國家進攻法國以試圖制止大革命的蔓延？", o: ["英國、俄羅斯", "奧地利、俄羅斯", "奧地利、普魯士", "普魯士、英國"], a: 2, e: "由於害怕大革命蔓延，專制帝國「奧地利」與「普魯士」於1792年4月聯合進攻法國，試圖制止法國大革命。" },
+        { q: "1793年，被裁定叛國罪的法國國王路易十六面臨了甚麼歷史性的下場？", o: ["流放至愛爾巴島", "送上斷頭台處死", "終身監禁", "褫奪王位成為平民"], a: 1, e: "1792年共和建立後，國王路易十六被裁定叛國罪，並於1793年1月被「送上斷頭台處死」，法國波旁王朝的專制統治正式結束。" },
+        { q: "1794年7月，哪位領導人的被捕及處決標誌著激進統治時期的結束？", o: ["羅伯斯比爾", "拿破崙", "路易十六", "加富爾"], a: 0, e: "激進派領導人「羅伯斯比爾」在面臨外敵與內亂時實行「恐怖時代」統治。1794年7月他被捕及處決，恐怖時代隨之結束。" },
+        { q: "1795至1799年間，未能擊退反法同盟且施政無能的法國政權是？", o: ["第一共和", "國民議會", "神聖同盟", "督政府"], a: 3, e: "恐怖時代結束後，法國進入「督政府」時期（1795-1799年），但因未能擊退反法同盟，最終造就了拿破崙的崛起。" },
+        { q: "結束了長達十年的法國大革命，並逐步實行專政的人物是誰？", o: ["路易十八", "拿破崙", "羅伯斯比爾", "俾斯麥"], a: 1, e: "「拿破崙」於1799年11月推翻督政府，逐步實行專政，標誌著法國大革命正式結束。" },
+        { q: "1814年法國皇帝首次被反法聯軍擊敗後，被流放到哪裡？", o: ["聖海倫娜島", "愛爾巴島", "西西里島", "科西嘉島"], a: 1, e: "1814年，拿破崙被反法聯軍擊敗，被迫退位，並被流放至「愛爾巴島」。" },
+        { q: "1821年，曾稱霸歐洲的法國統治者病逝於哪一個島嶼？", o: ["薩丁尼亞島", "愛爾巴島", "聖海倫娜島", "馬達加斯加"], a: 2, e: "拿破崙於1815年重奪帝位，但在滑鐵盧戰役再次被打敗，隨後被流放至「聖海倫娜島」，並於1821年病逝該地。" },
+        { q: "法國大革命最著名的口號是甚麼？", o: ["民族、民權、民生", "和平、土地、麵包", "自由、平等、博愛", "獨立、統一、富強"], a: 2, e: "「自由、平等、博愛」是法國大革命最核心的口號，促使自由主義在法國深深紮根。" },
+        { q: "主張人生而自由、平等，並有權推翻專制體制的思潮是？", o: ["共產主義", "帝國主義", "民族主義", "自由主義"], a: 3, e: "「自由主義」主張人生而自由、平等，擁有各種自由權利，以及有權推翻專制政府。" },
+        { q: "表達對所屬族群的效忠，並渴求獨立自主的感情，屬於哪一種思潮？", o: ["民族主義", "自由主義", "共產主義", "帝國主義"], a: 0, e: "「民族主義」是各民族對獨立自主的渴求，不受外族統治，並表達其對民族效忠的感情。" },
+        { q: "關於法國大革命後歐洲歷史發展的描述，下列哪一項是正確的？", o: ["1858年歐洲各地爆發多場大規模革命", "普魯士得到意大利的援助才成功統一", "意大利及德國先後於1870年及1871年完成統一", "法國及奧地利積極協助兩國完成統一"], a: 2, e: "根據歷史筆記，意大利及德國先後於1870年及1871年統一。1848年（而非1858年）爆發了多場革命；普魯士是依靠三場戰爭統一而非援助；而法國與奧地利是統一的障礙而非協助者。" },
+        { q: "十九世紀初，甚麼客觀形勢讓法國人對自身身分感到自豪，導致民族情緒高漲？", o: ["拿破崙稱霸歐洲", "波旁王朝復辟", "路易十四積極擴張", "頒布權利宣言"], a: 0, e: "拿破崙通過戰爭向歐洲擴張並「稱霸歐洲」，令法國人對民族身分感到自豪，帶動民族主義高漲。" },
+        { q: "自由主義和民族主義主要是透過甚麼歷史事件廣泛傳播至歐洲各地？", o: ["啟蒙運動及美國獨立戰爭", "維合納會議及神聖同盟", "拿破崙戰爭及拿破崙法典", "工業革命及貿易擴張"], a: 2, e: "自由主義和民族主義主要是透過「拿破崙戰爭」及「拿破崙法典」廣泛傳播至歐洲各地。" },
+        { q: "1814-15年舉行的重要國際會議，其主要目標之一是甚麼？", o: ["協助意大利統一", "遏止自由主義和民族主義的傳播", "推廣法典", "支持法國再度擴張"], a: 1, e: "1814-15年的維也納會議旨在重建歐洲秩序，其核心目標之一是「遏止自由主義和民族主義的傳播」。" },
+        { q: "在大革命前的法國舊制度下，「第二等級」主要是指哪一個特權階層？", o: ["貴族", "教士", "城市平民", "貧苦農民"], a: 0, e: "法國大革命前的三個封建等級中，「第一等級」為教士，「第二等級」為「貴族」。" },
+        { q: "1830年代及1848年歐洲爆發多場起義，當中唯一成功獨立的是哪一國？", o: ["德國", "意大利", "比利時", "奧地利"], a: 2, e: "十九世紀歐洲各地爆發多場革命，但除「比利時」外，大多以失敗告終。" },
+        { q: "在意大利統一運動中，帶領「紅衫軍」的主要領袖是誰？", o: ["加富爾", "伊曼紐二世", "俾斯麥", "加里波的"], a: 3, e: "根據筆記，意大利統一運動的三位領袖中，帶領民族主義者「紅衫軍」的是「加里波的」。" },
+        { q: "在德意志統一的過程中，擔任普魯士國王並領導統一運動的君主是哪一位？", o: ["拿破崙", "俾斯麥", "威廉一世", "加富爾"], a: 2, e: "德意志統一是由普魯士主導，當時的國王（主要領袖之一）是「威廉一世」，他任命俾斯麥協助統一。" },
+        // 複式選擇題 (31-45)
+        { q: "關於「革命」的特徵，下列哪些描述符合歷史定義？<br>I. 目的為推翻現有體制，建立新制度<br>II. 行動方向通常是由下而上<br>III. 方式往往涉及激進及暴力", o: ["開有 I, II", "只有 I, III", "只有 II, III", "I, II, III"], a: 3, e: "根據筆記導引，政治革命是由人民發起（由下而上），目的為推翻現有體制建立新制度，方式為激進及暴力。因此 I、II、III 全對。" },
+        { q: "路易十四統治時期的特點包括：<br>I. 強調君權神授<br>II. 奉行積極擴張政策<br>III. 修建凡爾賽宮", o: ["I, II, III", "只有 I, III", "只有 II, III", "只有 I, II"], a: 0, e: "波旁王朝的「太陽王」路易十四，在位期間強調君權神授、修建凡爾賽宮，並奉行積極擴張政策。因此全對。" },
+        { q: "大革命前，法國的特權階級（第一及第二等級）享有哪些優待？<br>I. 掌管政府要職<br>II. 毋須繳稅<br>III. 擁有全國過半土地", o: ["只有 I, II", "I, II, III", "只有 II, III", "只有 I, III"], a: 1, e: "第一等級與第二等級享有多項不公平待遇：掌管政府要職、毋須繳稅，並且擁有全國過半土地。因此 I、II、III 皆符合筆記內容。" },
+        { q: "導致法國陷入財政困境的原因包括：<br>I. 國王與王后揮霍無度<br>II. 1780年代遭遇多次天災<br>III. 对外戰爭頻繁", o: ["只有 I, II", "只有 I, III", "只有 II, III", "I, II, III"], a: 3, e: "筆記中指出財政困境的原因包括：「對外戰爭頻繁」（如派兵參與美國獨立戰爭）、「路易十六揮霍無度」，以及「1780年代遭遇多次天災」。因此三個選項皆正確。" },
+        { q: "革命初期發表的《人權及公民權利宣言》，其核心主張包括哪些？<br>I. 所有人生來都是自由和平等<br>II. 政府的權力來自人民<br>III. 君主必須由選舉產生", o: ["只有 I, II", "只有 I, III", "只有 II, III", "I, II, III"], a: 0, e: "1789年的《人權及公民權利宣言》主張生而自由平等、政府權力來自人民，但並未要求君主由選舉產生（當時後來建立了君主立憲）。因此 III 錯誤，答案為 I 和 II。" },
+        { q: "大革命爆發前夕，法國面臨嚴重的政治腐敗。以下關於當時法國王室的描述，哪些是正確的？<br>I. 國王路易十六疏於朝政<br>II. 王后瑪利安東妮特揮霍無度<br>III. 王室主動推行民主改革以安撫民眾", o: ["只有 I, III", "只有 I, II", "只有 II, III", "I, II, III"], a: 1, e: "筆記明確指出政治腐敗體現在「路易十六疏於朝政」與王后「瑪利安東妮特揮霍無度」。王室並未主動推行民主改革，因此 III 錯誤，答案為 I 和 II。" },
+        { q: "法國於1792年成立新政體（第一共和）後，採取了哪些果斷行動？<br>I. 廢除君主制<br>II. 處死國王<br>III. 頒布新法典", o: ["只有 I, II", "只有 I, III", "只有 II, III", "I, II, III"], a: 0, e: "1792年法國成立第一共和，隨即宣佈「廢除君主制」，並裁定路易十六叛國，於1793年將其處死。而《拿破崙法典》是1804年才頒布。因此 III 不適用，答案為 I 和 II。" },
+        { q: "1804年頒布的著名法典，其內容涵蓋了哪些範疇？<br>I. 保障人民的自由<br>II. 法律面前，人人平等<br>III. 廢除封建等級", o: ["只有 I, II", "I, II, III", "只有 II, III", "只有 I, III"], a: 1, e: "《拿破崙法典》明確規定廢除封建等級、保障人民的自由，以及法律面前人人平等。因此 I、II、III 全對。" },
+        { q: "革命戰爭及拿破崙時代期間，法國民族情緒高漲的原因包括：<br>I. 為捍衛革命和國家，團結一致對抗外敵<br>II. 拿破崙稱霸歐洲，令法國人對民族身分感到自豪<br>III. 維也納會議的壓迫", o: ["只有 I, III", "只有 II, III", "只有 I, II", "I, II, III"], a: 2, e: "根據歷史筆記，法國民族主義高漲的兩大主因是：「為捍衛革命和國家，團結一致對抗外敵」及「拿破崙稱霸歐洲，令法國人對民族身分感到自豪」。維也納會議是事後列強壓制法國的會議。因此正確答案為 I 和 II。" },
+        { q: "1814-15年召開的維也納會議旨在重建歐洲秩序，其具體目標包括：<br>I. 復辟專制王朝<br>II. 遏止自由主義和民族主義傳播<br>III. 防範法國再度擴張", o: ["只有 I, II", "開有 I, III", "I, II, III", "只有 II, III"], a: 2, e: "維也納會議的目標非常明確：恢復歐洲舊有秩序（復辟專制王朝）、遏止兩大思潮傳播，並防範法國再度擴張。因此三個目標皆正確。" },
+        { q: "上述會議後，列強採取的具體行動有甚麼？<br>I. 復辟被推翻的封建王朝<br>II. 建立軍事同盟合作鎮壓革命<br>III. 協助德國完成統一", o: ["只有 I, III", "只有 I, II", "只有 II, III", "I, II, III"], a: 1, e: "維引納會議後，保守列強採取了「復辟被推翻的封建王朝」以及「建立神聖同盟合作鎮壓革命」的行動。協助德國統一是錯誤的。因此答案為 I 和 II。" },
+        { q: "十九世紀中葉歐洲爆發的多場革命帶來了甚麼深遠影響？<br>I. 促成比利時革命成功<br>II. 鼓舞了意大利的統一運動<br>III. 鼓舞了德國的統一運動", o: ["只有 I, II", "只有 I, III", "只有 II, III", "I, II, III"], a: 3, e: "十九世紀歐洲的革命雖然多數失敗，但除「比利時」成功外，其深遠影響是「鼓舞了意大利及德國的統一運動」。因此 I、II、III 全對。" },
+        { q: "意大利的統一運動涉及了多位關鍵領袖，當中包括：<br>I. 伊曼紐二世<br>II. 加富爾<br>III. 加里波的", o: ["只有 I, II", "I, II, III", "只有 II, III", "只有 I, III"], a: 1, e: "根據歷史筆記的表格，意大利統一運動的主要領袖包括國王「伊曼紐二世」、首相「加富爾」以及帶領紅衫軍的「加里波的」。因此全對。" },
+        { q: "在德意志統一的過程中，普魯士先後策動了哪幾場決定性戰爭？<br>I. 普丹戰爭<br>II. 普奧戰爭<br>III. 普法戰爭", o: ["只有 I, II", "只有 I, III", "只有 II, III", "I, II, III"], a: 3, e: "歷史筆記明確列出，普魯士透過三場戰爭達成統一：1. 普丹戰爭；2. 普奧戰爭；3. 普法戰爭。因此三者全對。" },
+        { q: "自由思想能夠在法國深深紮根，其歷史背景原因包括：<br>I. 大革命以「自由、平等、博愛」為口號<br>II. 頒布《人權及公民權利宣言》<br>III. 維也納會議的推廣", o: ["開有 I, II", "只有 I, III", "只有 II, III", "I, II, III"], a: 0, e: "根據筆記，自由主義在法國紮根的原因包括：大革命的口號、頒布《人權及公民權利宣言》等。相反，維也納會議是為了遏止自由主義傳播，絕非推廣。因此 III 錯誤，答案為 I 和 II。" }
+    ];
+
+    const dbFill = [
+        { q: "在德意志統一的過程中，成功領導38個邦國統一為德國的主要領袖是____。", a: ["俾斯麥"], e: "歷史筆記指出，普魯士的領袖「俾斯麥」發動三場戰爭，成功領導38個邦國統一為德國。" },
+        { q: "十六至十七世紀期間，法國處於____王朝的統治下，專制統治不斷加強。", a: ["波旁"], e: "自十六世紀起，法國處於「波旁」王朝的統治下，專制統治不斷加強（如路易十四時期）。" },
+        { q: "法國大革命前，社會分為三個等級，其中佔總人口98%的是____。", a: ["第三等級"], e: "舊體制下，社會等級嚴格區分，其中包含平民在內的「第三等級」，佔總人口高達98%。" },
+        { q: "1789年6月20日，國民議會發表了《____》，表明國王若不實施憲法，議會絕不解散。", a: ["網球場宣言"], e: "1789年6月20日，國民議會代表發表了歷史性的《網球場宣言》，表明國王若不實施憲法，議會絕不解散。" },
+        { q: "1789年7月14日，法國人民攻陷____監獄，標誌著法國大革命爆發。", a: ["巴士底"], e: "1789年7月14日，法國人民攻陷了象徵專制統治的「巴士底」監獄，這標誌著法國大革命正式爆發。" },
+        { q: "國民議會於1789年8月頒布了重要文獻，主張所有人生來都是自由和平等，該文獻為《____》。", a: ["人權及公民權利宣言", "人權宣言"], e: "國民議會於1789年8月26日頒布《人權及公民權利宣言》，主張所有人生來都是自由和平等。" },
+        { q: "1792年9月，法國廢除君主制，正式建立的新政體被稱為____。", a: ["第一共和", "共和", "共和制"], e: "1792年9月，法國正式廢除了君主制，並成立了「第一共和」。" },
+        { q: "1793至1794年間，由羅伯斯比爾領導激進派奪得政權的時期被稱為____時代。", a: ["恐怖"], e: "1793-1794年間，由羅伯斯比爾領導的激進派實行嚴厲統治，拘捕及處決反革命分子，被稱為「恐怖」時代。" },
+        { q: "1799年11月，推翻督政府並逐步實行專政，最終結束了法國大革命的人物是____。", a: ["拿破崙"], e: "1799年11月，「拿破崙」推翻了未能擊退反法同盟的督政府，逐步實行專政，宣告大革命結束。" },
+        { q: "為保障人民的自由與法律面前人人平等，法國於1804年頒布了《____》。", a: ["拿破崙法典"], e: "拿破崙於1804年頒布了《拿破崙法典》，廢除封建等級，並以法律形式保障人民自由和平等。" },
+        { q: "1815年，重奪帝位後的法國皇帝最終在____戰役中被打敗並再次退位。", a: ["滑鐵盧"], e: "拿破崙於1815年重奪帝位後，最終在「滑鐵盧」戰役中被打敗，再次退位並被流放。" },
+        { q: "1814至1815年間，歐洲多國為了重建秩序並恢復專制王朝而舉行了____會議。", a: ["維也納"], e: "為了重建歐洲秩序、恢復專制王朝，並遏止自由及民族主義傳播，列強舉行了「維也納」會議。" },
+        { q: "為合作鎮壓革命，奧地利、普魯士、俄羅斯三國建立的組織名為「____」。", a: ["神聖同盟"], e: "在維也納會議的行動下，奧地利、普魯士、俄羅斯三國建立了「神聖同盟」，合作鎮壓革命。" },
+        { q: "1870年完成的意大利統一運動，主要是由____王國所領導。", a: ["薩丁尼亞"], e: "歷史筆記表格中記載，意大利統一運動的主導國是「薩丁尼亞」王國。" },
+        { q: "德意志統一的過程中，普魯士透過____戰爭打敗了法國。", a: ["普法"], e: "德意志統一過程中，普魯士發動的第三場關鍵戰爭是「普法」戰爭，並在其中打敗了法國，成功統一德國。" }
+    ];
+
+    function login() {
+        const classNum = document.getElementById('class-num-input').value.trim();
+        const name = document.getElementById('name-input').value.trim();
+        const pw = document.getElementById('pw-input').value.trim();
+
+        if(!classNum || !name || pw !== CORRECT_PASSWORD) {
+            document.getElementById('login-error').style.display = 'block';
+            return;
+        }
+
+        player.classNum = classNum;
+        player.name = name;
+        
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('quiz-screen').style.display = 'block';
+        document.getElementById('player-name').innerText = name;
+        document.getElementById('player-class-num').innerText = classNum;
+        
+        initGame();
+    }
+
+    function shuffleArray(arr) {
+        let array = [...arr];
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function initGame() {
+        let randMC = shuffleArray(dbMC).slice(0, 15).map(q => ({...q, type: 'mc'}));
+        let randFill = shuffleArray(dbFill).slice(0, 5).map(q => ({...q, type: 'fill'}));
+        selectedQuestions = [...randMC, ...randFill];
+        
+        currentQIndex = 0;
+        player.score = 0;
+        player.correct = 0;
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        if(currentQIndex >= 20) {
+            endGame();
+            return;
+        }
+
+        // 隱藏解析和下一題按鈕
+        document.getElementById('explanation-box').style.display = 'none';
+        document.getElementById('next-btn-container').style.display = 'none';
+
+        isAnswering = true;
+        let qData = selectedQuestions[currentQIndex];
+        document.getElementById('q-num').innerText = currentQIndex + 1;
+        document.getElementById('score').innerText = player.score;
+        document.getElementById('question-box').innerHTML = qData.q;
+
+        if(qData.type === 'mc') {
+            document.getElementById('mc-options').style.display = 'grid';
+            document.getElementById('fill-options').style.display = 'none';
+            for(let i=0; i<4; i++) {
+                let btn = document.getElementById('opt-'+i);
+                btn.innerHTML = String.fromCharCode(65+i) + ". " + qData.o[i];
+                btn.className = 'option-btn';
+                btn.disabled = false;
+            }
+            timeLeft = 30;
+        } else {
+            document.getElementById('mc-options').style.display = 'none';
+            document.getElementById('fill-options').style.display = 'flex';
+            document.getElementById('fill-input').value = '';
+            document.getElementById('fill-input').style.background = '#fff';
+            document.getElementById('fill-input').disabled = false;
+            document.getElementById('fill-submit-btn').disabled = false;
+            document.getElementById('fill-input').focus();
+            timeLeft = 40;
+        }
+        
+        document.getElementById('timer').innerText = timeLeft;
+        clearInterval(timerInterval);
+        timerInterval = setInterval(countdown, 1000);
+    }
+
+    function countdown() {
+        if(!isAnswering) return;
+        timeLeft--;
+        document.getElementById('timer').innerText = timeLeft;
+        if(timeLeft <= 0) {
+            clearInterval(timerInterval);
+            if(selectedQuestions[currentQIndex].type === 'mc') {
+                showMCAnswerAndExplanation(-1); // 超時
+            } else {
+                showFillAnswerAndExplanation(false); // 超時
+            }
+        }
+    }
+
+    function checkMC(selectedIndex) {
+        if(!isAnswering) return;
+        isAnswering = false;
+        clearInterval(timerInterval); // 答題完成立即停止計時
+        showMCAnswerAndExplanation(selectedIndex);
+    }
+
+    function showMCAnswerAndExplanation(selectedIndex) {
+        let qData = selectedQuestions[currentQIndex];
+        let correctIndex = qData.a;
+        
+        // 禁用所有按鈕
+        for(let i=0; i<4; i++) {
+            document.getElementById('opt-'+i).disabled = true;
+        }
+
+        let isCorrect = (selectedIndex === correctIndex);
+        
+        if(selectedIndex !== -1) {
+            let selectedBtn = document.getElementById('opt-'+selectedIndex);
+            if(isCorrect) {
+                selectedBtn.classList.add('correct');
+            } else {
+                selectedBtn.classList.add('wrong');
+            }
+        }
+        // 永遠亮出正確答案
+        document.getElementById('opt-'+correctIndex).classList.add('correct');
+
+        if(isCorrect) {
+            player.correct++;
+            let timeBonus = timeLeft * 30;
+            player.score += 1000 + timeBonus;
+            document.getElementById('score').innerText = player.score;
+        }
+
+        // 顯示解析與下一題按鈕
+        document.getElementById('explanation-text').innerHTML = `<b>正確答案是：${String.fromCharCode(65+correctIndex)}</b><br><br>${qData.e}`;
+        document.getElementById('explanation-box').style.display = 'block';
+        document.getElementById('next-btn-container').style.display = 'block';
+    }
+
+    function checkFill() {
+        if(!isAnswering) return;
+        let userAns = document.getElementById('fill-input').value.trim();
+        if(userAns === '') return;
+        
+        isAnswering = false;
+        clearInterval(timerInterval); // 答題完成立即停止計時
+        
+        let qData = selectedQuestions[currentQIndex];
+        let isCorrect = qData.a.some(ans => userAns === ans);
+        showFillAnswerAndExplanation(isCorrect, userAns);
+    }
+
+    function showFillAnswerAndExplanation(isCorrect, userAns = "") {
+        let qData = selectedQuestions[currentQIndex];
+        
+        document.getElementById('fill-input').disabled = true;
+        document.getElementById('fill-submit-btn').disabled = true;
+
+        if(isCorrect) {
+            document.getElementById('fill-input').style.background = '#aaeeaa';
+            player.correct++;
+            let timeBonus = timeLeft * 25;
+            player.score += 1000 + timeBonus;
+            document.getElementById('score').innerText = player.score;
+        } else {
+            document.getElementById('fill-input').style.background = '#eeaaaa';
+            if(userAns === "") {
+                document.getElementById('fill-input').value = "作答超時！";
+            }
+        }
+
+        // 顯示解析與下一題按鈕
+        document.getElementById('explanation-text').innerHTML = `<b>接受的正確答案：${qData.a.join(' 或 ')}</b><br><br>${qData.e}`;
+        document.getElementById('explanation-box').style.display = 'block';
+        document.getElementById('next-btn-container').style.display = 'block';
+    }
+
+    function goToNextQuestion() {
+        currentQIndex++;
+        loadQuestion(); // 此處才會進入下一題並重新啟動計時
+    }
+
+    function endGame() {
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+        
+        document.getElementById('cert-class-num').innerText = player.classNum;
+        document.getElementById('cert-name').innerText = player.name;
+        document.getElementById('cert-correct').innerText = player.correct;
+        document.getElementById('cert-score').innerText = player.score;
+
+        submitToGoogleForm();
+    }
+
+    function submitToGoogleForm() {
+        const formData = new URLSearchParams();
+        formData.append("class", player.classNum); 
+        formData.append("num", "00"); 
+        formData.append("name", player.name);
+        formData.append("score", player.score);
+        formData.append("correct", player.correct);
+
+        fetch(CLOUD_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData.toString()
+        }).then(() => {
+            console.log("成績已發送至後台。");
+        }).catch(err => {
+            console.error("發送失敗", err);
+        });
+    }
+</script>
+</body>
+</html>
